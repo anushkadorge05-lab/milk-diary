@@ -1,0 +1,327 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#1a73e8;--green:#16a34a;--red:#dc2626;--bg:#f8fafc;--card:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b}
+.app{max-width:420px;margin:0 auto;background:var(--bg);min-height:100vh;padding-bottom:80px}
+.topbar{background:var(--blue);color:#fff;padding:14px 16px;font-size:16px;font-weight:600}
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.tab{flex:1;padding:12px 4px;text-align:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.section{display:none;padding:12px}
+.section.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cname{font-size:15px;font-weight:600;color:var(--text)}
+.caddr{font-size:12px;color:var(--muted);margin-top:2px}
+.badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500}
+.badge.morning{background:#fef3c7;color:#92400e}
+.badge.evening{background:#dbeafe;color:#1e40af}
+.badge.both{background:#f0fdf4;color:#14532d}
+.tick-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.tick-btn{width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;font-size:18px;flex-shrink:0}
+.tick-done{background:#dcfce7}
+.tick-skip{background:#fee2e2}
+.tick-pending{background:#f1f5f9}
+.litres-input{width:70px;padding:5px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px}
+.btn{padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500}
+.btn-del{background:#fee2e2;color:var(--red)}
+.btn-sm{font-size:12px;padding:5px 10px}
+.btn-primary{background:var(--blue);color:#fff;width:100%;padding:12px;border-radius:10px;font-size:15px;font-weight:600;border:none;cursor:pointer;margin-top:10px}
+label{font-size:13px;font-weight:500;color:var(--muted);display:block;margin-bottom:4px;margin-top:12px}
+input[type=text],input[type=number],select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);background:#fff}
+input:focus,select:focus{outline:none;border-color:var(--blue)}
+.empty{text-align:center;color:var(--muted);padding:40px 20px;font-size:14px}
+.date-bar{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.date-bar input[type=date]{flex:1;border:none;padding:0;font-size:14px;font-weight:600;color:var(--blue)}
+.date-bar input[type=date]:focus{outline:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-box{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.summary-num{font-size:22px;font-weight:700;color:var(--green)}
+.summary-label{font-size:12px;color:var(--muted)}
+.shift-tag{font-size:11px;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:10px;margin-left:4px}
+</style>
+
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden">Milk Diary - milk delivery tracker</h2>
+
+<div class="app">
+  <div class="topbar">🥛 Milk Diary</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('today')">Today</div>
+    <div class="tab" onclick="showTab('customers')">Customers</div>
+    <div class="tab" onclick="showTab('history')">History</div>
+    <div class="tab" onclick="showTab('add')">+ Add</div>
+  </div>
+
+  <div class="section active" id="sec-today">
+    <div class="date-bar">
+      <span style="font-size:16px">📅</span>
+      <input type="date" id="todayDate" onchange="renderToday()">
+      <span style="font-size:12px;color:var(--muted)" id="dayLabel"></span>
+    </div>
+    <div class="grid2">
+      <div class="stat-box"><div class="summary-num" id="statDone">0</div><div class="summary-label">Delivered ✅</div></div>
+      <div class="stat-box"><div class="summary-num" id="statLitres" style="color:var(--blue)">0L</div><div class="summary-label">Total Litres</div></div>
+    </div>
+    <div id="todayList"></div>
+  </div>
+
+  <div class="section" id="sec-customers">
+    <div id="custList"></div>
+  </div>
+
+  <div class="section" id="sec-history">
+    <div id="histList"></div>
+  </div>
+
+  <div class="section" id="sec-add">
+    <div class="card">
+      <div style="font-size:15px;font-weight:600;margin-bottom:4px">Add New Customer</div>
+      <div style="font-size:12px;color:var(--muted)">Fill once — then just tick daily</div>
+      <label>Name *</label>
+      <input type="text" id="inp_name" placeholder="e.g. Sharma Ji">
+      <label>Address</label>
+      <input type="text" id="inp_addr" placeholder="e.g. A-12, Shivaji Nagar">
+      <label>Phone (optional)</label>
+      <input type="text" id="inp_phone" placeholder="9876543210">
+      <label>Default Litres (Morning)</label>
+      <input type="number" id="inp_lm" placeholder="1" min="0.5" step="0.5" value="1">
+      <label>Default Litres (Evening)</label>
+      <input type="number" id="inp_le" placeholder="0" min="0" step="0.5" value="0">
+      <label>Delivery Shift</label>
+      <select id="inp_shift">
+        <option value="morning">Morning Only</option>
+        <option value="evening">Evening Only</option>
+        <option value="both">Morning + Evening</option>
+      </select>
+      <label>Rate per Litre (₹)</label>
+      <input type="number" id="inp_rate" placeholder="60" value="60" min="1">
+      <button class="btn-primary" onclick="addCustomer()">Save Customer ✅</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let customers = JSON.parse(localStorage.getItem('md_customers')||'[]');
+let deliveries = JSON.parse(localStorage.getItem('md_deliveries')||'{}');
+
+function save(){
+  localStorage.setItem('md_customers',JSON.stringify(customers));
+  localStorage.setItem('md_deliveries',JSON.stringify(deliveries));
+}
+
+function today(){
+  return new Date().toISOString().split('T')[0];
+}
+
+function initDate(){
+  const d = document.getElementById('todayDate');
+  d.value = today();
+  setDayLabel(d.value);
+}
+
+function setDayLabel(val){
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const d = new Date(val+'T00:00:00');
+  document.getElementById('dayLabel').textContent = days[d.getDay()];
+}
+
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    const names=['today','customers','history','add'];
+    el.classList.toggle('active', names[i]===t);
+  });
+  document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  if(t==='today') renderToday();
+  if(t==='customers') renderCustomers();
+  if(t==='history') renderHistory();
+}
+
+function getDelivery(cid,date,shift){
+  const key = cid+'_'+date+'_'+shift;
+  return deliveries[key]||{status:'pending',litres:null};
+}
+
+function setDelivery(cid,date,shift,status,litres){
+  const key = cid+'_'+date+'_'+shift;
+  deliveries[key] = {status,litres};
+  save();
+}
+
+function renderToday(){
+  const date = document.getElementById('todayDate').value;
+  setDayLabel(date);
+  const list = document.getElementById('todayList');
+  if(customers.length===0){
+    list.innerHTML='<div class="empty">No customers yet.<br>Go to + Add tab to add one!</div>';
+    return;
+  }
+  let doneCt=0, totalL=0;
+  let html='';
+  customers.forEach(c=>{
+    const shifts = c.shift==='both'?['morning','evening']:[c.shift];
+    shifts.forEach(sh=>{
+      const del = getDelivery(c.id,date,sh);
+      const defL = sh==='morning'?c.litres_morning:c.litres_evening;
+      const curL = del.litres!==null?del.litres:defL;
+      if(del.status==='done'){doneCt++;totalL+=parseFloat(curL||0);}
+      const shLabel = sh==='morning'?'☀️ Morning':'🌙 Evening';
+      html+=`<div class="card">
+        <div class="card-head">
+          <div>
+            <div class="cname">${c.name} <span class="shift-tag">${shLabel}</span></div>
+            <div class="caddr">${c.address||''}</div>
+          </div>
+          <span class="badge ${c.shift}">${c.shift==='morning'?'Morning':c.shift==='evening'?'Evening':'Both'}</span>
+        </div>
+        <div class="tick-row">
+          <button class="tick-btn ${del.status==='done'?'tick-done':'tick-pending'}" onclick="toggleTick('${c.id}','${date}','${sh}')" title="Delivered">✅</button>
+          <button class="tick-btn ${del.status==='skip'?'tick-skip':'tick-pending'}" onclick="skipDel('${c.id}','${date}','${sh}')" title="Skipped">❌</button>
+          <input class="litres-input" type="number" min="0.5" step="0.5" value="${curL}" id="lit_${c.id}_${sh}" onchange="updateLitres('${c.id}','${date}','${sh}',this.value)" placeholder="L">
+          <span style="font-size:13px;color:var(--muted)">litres</span>
+          ${del.status==='done'?`<span style="color:var(--green);font-size:12px;font-weight:500">Delivered</span>`:''}
+          ${del.status==='skip'?`<span style="color:var(--red);font-size:12px;font-weight:500">Skipped</span>`:''}
+        </div>
+      </div>`;
+    });
+  });
+  list.innerHTML=html;
+  document.getElementById('statDone').textContent=doneCt;
+  document.getElementById('statLitres').textContent=totalL.toFixed(1)+'L';
+}
+
+function toggleTick(cid,date,shift){
+  const inp = document.getElementById('lit_'+cid+'_'+shift);
+  const litres = parseFloat(inp?inp.value:1)||1;
+  const cur = getDelivery(cid,date,shift);
+  setDelivery(cid,date,shift, cur.status==='done'?'pending':'done', litres);
+  renderToday();
+}
+
+function skipDel(cid,date,shift){
+  const cur = getDelivery(cid,date,shift);
+  setDelivery(cid,date,shift, cur.status==='skip'?'pending':'skip', null);
+  renderToday();
+}
+
+function updateLitres(cid,date,shift,val){
+  const cur = getDelivery(cid,date,shift);
+  setDelivery(cid,date,shift, cur.status, parseFloat(val)||1);
+}
+
+function renderCustomers(){
+  const list = document.getElementById('custList');
+  if(customers.length===0){
+    list.innerHTML='<div class="empty">No customers yet.<br>Go to + Add tab!</div>';
+    return;
+  }
+  let html='';
+  customers.forEach(c=>{
+    const monthL = getMonthLitres(c.id);
+    const monthAmt = (monthL*(c.rate||60)).toFixed(0);
+    html+=`<div class="card">
+      <div class="card-head">
+        <div>
+          <div class="cname">${c.name}</div>
+          <div class="caddr">${c.address||'No address'}</div>
+        </div>
+        <span class="badge ${c.shift}">${c.shift==='morning'?'Morning':c.shift==='evening'?'Evening':'Both'}</span>
+      </div>
+      <div style="display:flex;gap:16px;font-size:13px;color:var(--muted);margin-top:6px">
+        <span>☀️ ${c.litres_morning}L morning</span>
+        ${c.shift==='both'?`<span>🌙 ${c.litres_evening}L evening</span>`:''}
+        <span>₹${c.rate||60}/L</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--muted)">This month: <b style="color:var(--text)">${monthL.toFixed(1)}L = ₹${monthAmt}</b></div>
+        <button class="btn btn-del btn-sm" onclick="deleteCustomer('${c.id}')">Remove</button>
+      </div>
+      ${c.phone?`<div style="margin-top:8px"><a href="tel:${c.phone}" style="font-size:13px;color:var(--blue);text-decoration:none">📞 ${c.phone}</a></div>`:''}
+    </div>`;
+  });
+  list.innerHTML=html;
+}
+
+function getMonthLitres(cid){
+  const prefix = new Date().toISOString().slice(0,7);
+  let total=0;
+  Object.keys(deliveries).forEach(k=>{
+    if(k.startsWith(cid+'_'+prefix)&&deliveries[k].status==='done'){
+      total+=parseFloat(deliveries[k].litres||0);
+    }
+  });
+  return total;
+}
+
+function deleteCustomer(id){
+  if(!confirm('Remove this customer?')) return;
+  customers=customers.filter(c=>c.id!==id);
+  save();
+  renderCustomers();
+}
+
+function renderHistory(){
+  const list = document.getElementById('histList');
+  const last14=[];
+  for(let i=0;i<14;i++){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    last14.push(d.toISOString().split('T')[0]);
+  }
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html='';
+  last14.forEach(date=>{
+    const d=new Date(date+'T00:00:00');
+    let done=0,skip=0,litres=0;
+    customers.forEach(c=>{
+      const shifts=c.shift==='both'?['morning','evening']:[c.shift];
+      shifts.forEach(sh=>{
+        const del=getDelivery(c.id,date,sh);
+        if(del.status==='done'){done++;litres+=parseFloat(del.litres||0);}
+        if(del.status==='skip') skip++;
+      });
+    });
+    if(done>0||skip>0){
+      html+=`<div class="card" onclick="jumpToDate('${date}')" style="cursor:pointer">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:14px;font-weight:600">${date} <span style="font-size:12px;color:var(--muted)">${days[d.getDay()]}</span></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">${done} delivered · ${skip} skipped · ${litres.toFixed(1)}L total</div>
+          </div>
+          <span style="font-size:18px">${done>0?'✅':''}</span>
+        </div>
+      </div>`;
+    }
+  });
+  list.innerHTML=html||'<div class="empty">No delivery records yet.</div>';
+}
+
+function jumpToDate(date){
+  document.getElementById('todayDate').value=date;
+  showTab('today');
+}
+
+function addCustomer(){
+  const name=document.getElementById('inp_name').value.trim();
+  if(!name){alert('Name is required!');return;}
+  const c={
+    id:'c'+Date.now(),
+    name,
+    address:document.getElementById('inp_addr').value.trim(),
+    phone:document.getElementById('inp_phone').value.trim(),
+    litres_morning:parseFloat(document.getElementById('inp_lm').value)||1,
+    litres_evening:parseFloat(document.getElementById('inp_le').value)||0,
+    shift:document.getElementById('inp_shift').value,
+    rate:parseFloat(document.getElementById('inp_rate').value)||60,
+    added:today()
+  };
+  customers.push(c);
+  save();
+  ['inp_name','inp_addr','inp_phone'].forEach(id=>document.getElementById(id).value='');
+  alert('✅ '+name+' added!');
+  showTab('customers');
+}
+
+initDate();
+renderToday();
+</script>
